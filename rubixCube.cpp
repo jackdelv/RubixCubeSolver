@@ -6,7 +6,7 @@
 // Face Class
 // #######################
 
-#define _DEBUG 0
+#define _DEBUG 1
 
 Face::Face(RubixColor c)
 {
@@ -100,8 +100,6 @@ RubixCube::RubixCube()
 RubixCube::RubixCube(int moves)
 : RubixCube()
 {
-    srand(time(0));
-
     for (int n = 0; n <= moves; ++n)
     {
         this->rotateCW(static_cast<RubixFace>(rand() % 6));
@@ -151,23 +149,12 @@ void RubixCube::print(int spacing = 0)
             std::cout << colorToChar(front.sticker(2,0)) << sp5 << colorToChar(front.sticker(1,2)) << " " << colorToChar(right.sticker(1,0)) << sp5 << colorToChar(right.sticker(2,2)) << sp7 << sp3 << colorToChar(down.sticker(0,0)) <<  sp6 << colorToChar(down.sticker(1,1)) << sp6 << colorToChar(down.sticker(2,2)) << std::endl;
             std::cout << sp3 << colorToChar(front.sticker(2,1)) << sp7 << colorToChar(right.sticker(2,1)) << sp3 << sp7 << sp3 << sp4 << colorToChar(down.sticker(0,1)) << sp5 << colorToChar(down.sticker(1,2)) << sp4 << std::endl;
             std::cout << sp6 << colorToChar(front.sticker(2,2)) << " " << colorToChar(right.sticker(2,0)) << sp6 << sp7 << sp3 << sp7 << colorToChar(down.sticker(0,2)) << sp7 << std::endl;
-            std::cout << std::endl;
+            std::cout << "\033[0m" << std::endl;
             break;
         }
         case 1:
         {
-            std::cout << sp7 << colorToChar(up.sticker(0,0)) << sp7 << sp7 << sp3 << sp6 << colorToChar(left.sticker(0,0)) << " " << colorToChar(back.sticker(0,2)) << sp6 << std::endl;
-            std::cout << sp4 << colorToChar(up.sticker(1,0)) << sp5 << colorToChar(up.sticker(0,1)) << sp4 << sp7 << sp3 << sp3 << colorToChar(left.sticker(0,1)) << sp7 << colorToChar(back.sticker(0,1)) << sp3 << std::endl;
-            std::cout << colorToChar(up.sticker(2,0)) <<  sp6 << colorToChar(up.sticker(1,1)) << sp6 << colorToChar(up.sticker(0,2)) << sp7 << sp3 << colorToChar(left.sticker(0,2)) << sp5 << colorToChar(left.sticker(1,0)) << " " << colorToChar(back.sticker(1,2)) << sp5 << colorToChar(back.sticker(0,0)) << std::endl;
-            std::cout << colorToChar(front.sticker(0,0)) << sp3 << colorToChar(up.sticker(2,1)) << sp5 << colorToChar(up.sticker(1,2)) << sp3 << colorToChar(right.sticker(0,2)) << sp7 << sp3 << sp3 << colorToChar(left.sticker(1,1)) << sp7 << colorToChar(back.sticker(1,1)) << sp3 << std::endl;
-            std::cout << sp3 << colorToChar(front.sticker(0,1)) << sp3 << colorToChar(up.sticker(2,2)) << sp3 << colorToChar(right.sticker(0,1)) << sp3 << sp7 << sp3 << colorToChar(left.sticker(1,2)) << sp5 << colorToChar(left.sticker(2,0)) << " " << colorToChar(back.sticker(2,2)) << sp5 << colorToChar(back.sticker(1,0)) << std::endl;
-            std::cout << colorToChar(front.sticker(1,0)) << sp5 << colorToChar(front.sticker(0,2)) << " " << colorToChar(right.sticker(0,0)) << sp5 << colorToChar(right.sticker(1,2)) << sp7 << sp3 << sp3 << colorToChar(left.sticker(2,1)) << sp3 << colorToChar(down.sticker(2,0)) << sp3 << colorToChar(back.sticker(2,1)) << sp3 << std::endl;
-            std::cout << sp3 << colorToChar(front.sticker(1,1)) << sp7 << colorToChar(right.sticker(1,1)) << sp3 << sp7 << sp3 << colorToChar(left.sticker(2,2)) << sp3 << colorToChar(down.sticker(1,0)) << sp5 << colorToChar(down.sticker(2,1)) << sp3 << colorToChar(back.sticker(0,0)) << std::endl;
-            std::cout << colorToChar(front.sticker(2,0)) << sp5 << colorToChar(front.sticker(1,2)) << " " << colorToChar(right.sticker(1,0)) << sp5 << colorToChar(right.sticker(2,2)) << sp7 << sp3 << colorToChar(down.sticker(0,0)) <<  sp6 << colorToChar(down.sticker(1,1)) << sp6 << colorToChar(down.sticker(2,2)) << std::endl;
-            std::cout << sp3 << colorToChar(front.sticker(2,1)) << sp7 << colorToChar(right.sticker(2,1)) << sp3 << sp7 << sp3 << sp4 << colorToChar(down.sticker(0,1)) << sp5 << colorToChar(down.sticker(1,2)) << sp4 << std::endl;
-            std::cout << sp6 << colorToChar(front.sticker(2,2)) << " " << colorToChar(right.sticker(2,0)) << sp6 << sp7 << sp3 << sp7 << colorToChar(down.sticker(0,2)) << sp7 << std::endl;
-            std::cout << std::endl;
-            break;
+
         }
     }
 }
@@ -398,16 +385,41 @@ void testRotations()
     std::cout << "*************************************************" << std::endl;
 }
 
+void dummySolver()
+{
+    RubixCube solvedCube;
+    RubixCube randomCube(100);
+    std::time_t startTime = time(0);
+    uint64_t i = 0;
+    while (!solvedCube.equivalent(randomCube))
+    {
+        randomCube.rotateCW(static_cast<RubixFace>(rand() % 6));
+        i++;
+#if _DEBUG
+        if (i % 30000000 == 0)
+            randomCube.print();
+#endif
+    }
+
+    int elapsedTime = time(0) - startTime;
+    std::cout << "Solved cube with monkey and a typewriter: " << i << " moves in ";
+    std::cout << (int)(elapsedTime / 60) << " minutes " << elapsedTime % 60 << " seconds." << std::endl;
+}
+
 int main()
 {
+
+    srand(time(0));
     testRotations();
 
     RubixCube cube;
-    cube.rotateCW(RIGHT).rotateCW(RIGHT).lazyCCW(LEFT).lazyCCW(LEFT);
-    cube.rotateCW(FRONT).rotateCW(FRONT).lazyCCW(BACK).lazyCCW(BACK);
-    cube.rotateCW(UP).rotateCW(UP).lazyCCW(DOWN).lazyCCW(DOWN);
+    cube.rotateCW(RIGHT).rotateCW(RIGHT).rotateCCW(LEFT).rotateCCW(LEFT);
+    cube.rotateCW(FRONT).rotateCW(FRONT).rotateCCW(BACK).rotateCCW(BACK);
+    cube.rotateCW(UP).rotateCW(UP).rotateCCW(DOWN).rotateCCW(DOWN);
     cube.print();
 
     RubixCube cube2(25000);
     cube2.print();
+    
+    dummySolver();
 }

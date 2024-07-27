@@ -51,7 +51,6 @@ class RubixCube
 
     RubixCube & rotateCW(RubixFace face);
     RubixCube & rotateCCW(RubixFace face);
-    RubixCube & lazyCCW(RubixFace face) { return rotateCW(face).rotateCW(face).rotateCW(face); };
 
     private:
     Face up;
