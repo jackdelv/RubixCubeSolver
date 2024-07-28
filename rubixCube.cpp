@@ -6,7 +6,7 @@
 // Face Class
 // #######################
 
-#define _DEBUG 1
+#define _DEBUG 0
 
 Face::Face(RubixColor c)
 {
@@ -74,6 +74,22 @@ bool Face::operator==(const Face & other)
     }
 
     return true;
+}
+
+unsigned Face::equivalence(const Face & other)
+{
+    unsigned match = 0;
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (stickers[i][j] == other.sticker(i,j))
+                match++;
+        }
+    }
+
+    return match;
 }
 
 void Face::reset()
@@ -162,6 +178,11 @@ void RubixCube::print(int spacing = 0)
 bool RubixCube::equivalent(RubixCube &other)
 {
     return this->up == other.up && this->down == other.down && this->front == other.front && this->back == other.back && this->left == other.left && this->right == other.right;
+}
+
+unsigned RubixCube::equivalence(RubixCube &other)
+{
+    return up.equivalence(other.up) + down.equivalence(other.down) + front.equivalence(other.front) + back.equivalence(other.back) + left.equivalence(other.left) + right.equivalence(other.right); 
 }
 
 RubixCube & RubixCube::rotateCW(RubixFace face)
@@ -385,6 +406,27 @@ void testRotations()
     std::cout << "*************************************************" << std::endl;
 }
 
+// #######################
+// RubixCubeSolver Class
+// #######################
+
+void RubixCubeSolver::solveCube(RubixCube & mixed)
+{
+    RubixCube solved;
+
+    if (solved.equivalent(mixed))
+    {
+        std::cout << "Challenge cube is already solved!" << std::endl;
+        return;
+    }
+
+
+}
+
+// #######################
+// Utility functions
+// #######################
+
 void dummySolver()
 {
     RubixCube solvedCube;
@@ -394,11 +436,13 @@ void dummySolver()
     while (!solvedCube.equivalent(randomCube))
     {
         randomCube.rotateCW(static_cast<RubixFace>(rand() % 6));
-        i++;
+        if (solvedCube.equivalence(randomCube) > 30)
+            randomCube.print();
 #if _DEBUG
-        if (i % 30000000 == 0)
+        if (i % 40000000 == 0)
             randomCube.print();
 #endif
+        i++;
     }
 
     int elapsedTime = time(0) - startTime;

@@ -32,6 +32,7 @@ class Face
     Face & rotateCCW();
 
     bool operator==(const Face &other);
+    unsigned equivalence(const Face &other);
     void reset();
 
     private:
@@ -47,6 +48,7 @@ class RubixCube
 
     void print(int spacing);
     bool equivalent(RubixCube &other);
+    unsigned equivalence(RubixCube &other);
     RubixCube & reset() { up.reset(); down.reset(); front.reset(); back.reset(); left.reset(); right.reset(); return *this; };
 
     RubixCube & rotateCW(RubixFace face);
@@ -59,4 +61,14 @@ class RubixCube
     Face back;
     Face left;
     Face right;
+};
+
+class RubixCubeSolver
+{
+    public:
+    RubixCubeSolver();
+
+    void solveCube(RubixCube & _mixed);
+
+    private:
 };
