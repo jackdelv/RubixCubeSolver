@@ -46,7 +46,7 @@ class RubixCube
     RubixCube();
     RubixCube(int moves);
 
-    void print(int spacing);
+    void print(int spacing = 0);
     bool equivalent(RubixCube &other);
     unsigned equivalence(RubixCube &other);
     RubixCube & reset() { up.reset(); down.reset(); front.reset(); back.reset(); left.reset(); right.reset(); return *this; };

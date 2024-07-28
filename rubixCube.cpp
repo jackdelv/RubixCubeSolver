@@ -119,6 +119,9 @@ RubixCube::RubixCube(int moves)
     for (int n = 0; n <= moves; ++n)
     {
         this->rotateCW(static_cast<RubixFace>(rand() % 6));
+#if _DEBUG
+        this->print();
+#endif
     }
 }
 
@@ -143,7 +146,7 @@ const char * colorToChar(RubixColor c)
     }
 }
 
-void RubixCube::print(int spacing = 0)
+void RubixCube::print(int spacing)
 {
     const char *sp7 = "       ";
     const char *sp6 = "      ";
@@ -161,7 +164,7 @@ void RubixCube::print(int spacing = 0)
             std::cout << colorToChar(front.sticker(0,0)) << sp3 << colorToChar(up.sticker(2,1)) << sp5 << colorToChar(up.sticker(1,2)) << sp3 << colorToChar(right.sticker(0,2)) << sp7 << sp3 << sp3 << colorToChar(left.sticker(1,1)) << sp7 << colorToChar(back.sticker(1,1)) << sp3 << std::endl;
             std::cout << sp3 << colorToChar(front.sticker(0,1)) << sp3 << colorToChar(up.sticker(2,2)) << sp3 << colorToChar(right.sticker(0,1)) << sp3 << sp7 << sp3 << colorToChar(left.sticker(1,2)) << sp5 << colorToChar(left.sticker(2,0)) << " " << colorToChar(back.sticker(2,2)) << sp5 << colorToChar(back.sticker(1,0)) << std::endl;
             std::cout << colorToChar(front.sticker(1,0)) << sp5 << colorToChar(front.sticker(0,2)) << " " << colorToChar(right.sticker(0,0)) << sp5 << colorToChar(right.sticker(1,2)) << sp7 << sp3 << sp3 << colorToChar(left.sticker(2,1)) << sp3 << colorToChar(down.sticker(2,0)) << sp3 << colorToChar(back.sticker(2,1)) << sp3 << std::endl;
-            std::cout << sp3 << colorToChar(front.sticker(1,1)) << sp7 << colorToChar(right.sticker(1,1)) << sp3 << sp7 << sp3 << colorToChar(left.sticker(2,2)) << sp3 << colorToChar(down.sticker(1,0)) << sp5 << colorToChar(down.sticker(2,1)) << sp3 << colorToChar(back.sticker(0,0)) << std::endl;
+            std::cout << sp3 << colorToChar(front.sticker(1,1)) << sp7 << colorToChar(right.sticker(1,1)) << sp3 << sp7 << sp3 << colorToChar(left.sticker(2,2)) << sp3 << colorToChar(down.sticker(1,0)) << sp5 << colorToChar(down.sticker(2,1)) << sp3 << colorToChar(back.sticker(2,0)) << std::endl;
             std::cout << colorToChar(front.sticker(2,0)) << sp5 << colorToChar(front.sticker(1,2)) << " " << colorToChar(right.sticker(1,0)) << sp5 << colorToChar(right.sticker(2,2)) << sp7 << sp3 << colorToChar(down.sticker(0,0)) <<  sp6 << colorToChar(down.sticker(1,1)) << sp6 << colorToChar(down.sticker(2,2)) << std::endl;
             std::cout << sp3 << colorToChar(front.sticker(2,1)) << sp7 << colorToChar(right.sticker(2,1)) << sp3 << sp7 << sp3 << sp4 << colorToChar(down.sticker(0,1)) << sp5 << colorToChar(down.sticker(1,2)) << sp4 << std::endl;
             std::cout << sp6 << colorToChar(front.sticker(2,2)) << " " << colorToChar(right.sticker(2,0)) << sp6 << sp7 << sp3 << sp7 << colorToChar(down.sticker(0,2)) << sp7 << std::endl;
@@ -192,15 +195,19 @@ RubixCube & RubixCube::rotateCW(RubixFace face)
     {
         case UP:
             up.rotateCW();
-            std::swap(left.stickers[0],front.stickers[0]);
-            std::swap(right.stickers[0],front.stickers[0]);
-            std::swap(right.stickers[0],back.stickers[0]); 
+            tempRow = left.stickers[0];
+            left.stickers[0] = front.stickers[0];
+            front.stickers[0] = right.stickers[0];
+            right.stickers[0] = back.stickers[0];
+            back.stickers[0] = tempRow; 
             break; 
         case DOWN:
             down.rotateCW();
-            std::swap(right.stickers[2],front.stickers[2]);
-            std::swap(left.stickers[2],front.stickers[2]);
-            std::swap(left.stickers[2],back.stickers[2]);
+            tempRow = left.stickers[2];
+            left.stickers[2] = back.stickers[2];
+            back.stickers[2] = right.stickers[2];
+            right.stickers[2] = front.stickers[2];
+            front.stickers[2] = tempRow; 
             break;  
         case FRONT:
             front.rotateCW();
@@ -224,9 +231,9 @@ RubixCube & RubixCube::rotateCW(RubixFace face)
             up.stickers[0][2] = right.sticker(2,2);
             up.stickers[0][1] = right.sticker(1,2);
             up.stickers[0][0] = right.sticker(0,2);
-            right.stickers[2][2] = down.sticker(2,2);
+            right.stickers[2][2] = down.sticker(2,0);
             right.stickers[1][2] = down.sticker(2,1);
-            right.stickers[0][2] = down.sticker(2,0);
+            right.stickers[0][2] = down.sticker(2,2);
             down.stickers[2][2] = left.sticker(2,0);
             down.stickers[2][1] = left.sticker(1,0);
             down.stickers[2][0] = left.sticker(0,0);
@@ -278,15 +285,19 @@ RubixCube & RubixCube::rotateCCW(RubixFace face)
     {
         case UP:
             up.rotateCCW();
-            std::swap(right.stickers[0],front.stickers[0]);
-            std::swap(left.stickers[0],front.stickers[0]);
-            std::swap(left.stickers[0],back.stickers[0]); 
+            tempRow = right.stickers[0];
+            right.stickers[0] = front.stickers[0];
+            front.stickers[0] = left.stickers[0];
+            left.stickers[0] = back.stickers[0]; 
+            back.stickers[0] = tempRow;
             break; 
         case DOWN:
             down.rotateCCW();
-            std::swap(left.stickers[2],front.stickers[2]);
-            std::swap(right.stickers[2],front.stickers[2]);
-            std::swap(right.stickers[2],back.stickers[2]);
+            tempRow = left.stickers[2];
+            left.stickers[2] = front.stickers[2];
+            front.stickers[2] = right.stickers[2];
+            right.stickers[2] = back.stickers[2];
+            back.stickers[2] = tempRow;
             break;  
         case FRONT:
             front.rotateCCW();
@@ -457,12 +468,9 @@ int main()
     testRotations();
 
     RubixCube cube;
-    cube.rotateCW(RIGHT).rotateCW(RIGHT).rotateCCW(LEFT).rotateCCW(LEFT);
-    cube.rotateCW(FRONT).rotateCW(FRONT).rotateCCW(BACK).rotateCCW(BACK);
-    cube.rotateCW(UP).rotateCW(UP).rotateCCW(DOWN).rotateCCW(DOWN);
     cube.print();
 
-    RubixCube cube2(25000);
+    RubixCube cube2(25);
     cube2.print();
     
     dummySolver();
