@@ -6,7 +6,7 @@
 // Face Class
 // #######################
 
-#define _DEBUG 0
+#define _DEBUG 2
 
 Face::Face(RubixColor c)
 {
@@ -119,9 +119,6 @@ RubixCube::RubixCube(int moves)
     for (int n = 0; n <= moves; ++n)
     {
         this->rotateCW(static_cast<RubixFace>(rand() % 6));
-#if _DEBUG
-        this->print();
-#endif
     }
 }
 
@@ -160,12 +157,12 @@ void RubixCube::print(int spacing)
         {
             std::cout << sp7 << colorToChar(up.sticker(0,0)) << sp7 << sp7 << sp3 << sp6 << colorToChar(left.sticker(0,0)) << " " << colorToChar(back.sticker(0,2)) << sp6 << std::endl;
             std::cout << sp4 << colorToChar(up.sticker(1,0)) << sp5 << colorToChar(up.sticker(0,1)) << sp4 << sp7 << sp3 << sp3 << colorToChar(left.sticker(0,1)) << sp7 << colorToChar(back.sticker(0,1)) << sp3 << std::endl;
-            std::cout << colorToChar(up.sticker(2,0)) <<  sp6 << colorToChar(up.sticker(1,1)) << sp6 << colorToChar(up.sticker(0,2)) << sp7 << sp3 << colorToChar(left.sticker(0,2)) << sp5 << colorToChar(left.sticker(1,0)) << " " << colorToChar(back.sticker(1,2)) << sp5 << colorToChar(back.sticker(0,0)) << std::endl;
+            std::cout <<  " " << colorToChar(up.sticker(2,0)) << sp5 << colorToChar(up.sticker(1,1)) << sp5 << colorToChar(up.sticker(0,2)) << " " << sp7 << sp3 << colorToChar(left.sticker(0,2)) << sp5 << colorToChar(left.sticker(1,0)) << " " << colorToChar(back.sticker(1,2)) << sp5 << colorToChar(back.sticker(0,0)) << std::endl;
             std::cout << colorToChar(front.sticker(0,0)) << sp3 << colorToChar(up.sticker(2,1)) << sp5 << colorToChar(up.sticker(1,2)) << sp3 << colorToChar(right.sticker(0,2)) << sp7 << sp3 << sp3 << colorToChar(left.sticker(1,1)) << sp7 << colorToChar(back.sticker(1,1)) << sp3 << std::endl;
             std::cout << sp3 << colorToChar(front.sticker(0,1)) << sp3 << colorToChar(up.sticker(2,2)) << sp3 << colorToChar(right.sticker(0,1)) << sp3 << sp7 << sp3 << colorToChar(left.sticker(1,2)) << sp5 << colorToChar(left.sticker(2,0)) << " " << colorToChar(back.sticker(2,2)) << sp5 << colorToChar(back.sticker(1,0)) << std::endl;
             std::cout << colorToChar(front.sticker(1,0)) << sp5 << colorToChar(front.sticker(0,2)) << " " << colorToChar(right.sticker(0,0)) << sp5 << colorToChar(right.sticker(1,2)) << sp7 << sp3 << sp3 << colorToChar(left.sticker(2,1)) << sp3 << colorToChar(down.sticker(2,0)) << sp3 << colorToChar(back.sticker(2,1)) << sp3 << std::endl;
             std::cout << sp3 << colorToChar(front.sticker(1,1)) << sp7 << colorToChar(right.sticker(1,1)) << sp3 << sp7 << sp3 << colorToChar(left.sticker(2,2)) << sp3 << colorToChar(down.sticker(1,0)) << sp5 << colorToChar(down.sticker(2,1)) << sp3 << colorToChar(back.sticker(2,0)) << std::endl;
-            std::cout << colorToChar(front.sticker(2,0)) << sp5 << colorToChar(front.sticker(1,2)) << " " << colorToChar(right.sticker(1,0)) << sp5 << colorToChar(right.sticker(2,2)) << sp7 << sp3 << colorToChar(down.sticker(0,0)) <<  sp6 << colorToChar(down.sticker(1,1)) << sp6 << colorToChar(down.sticker(2,2)) << std::endl;
+            std::cout << colorToChar(front.sticker(2,0)) << sp5 << colorToChar(front.sticker(1,2)) << " " << colorToChar(right.sticker(1,0)) << sp5 << colorToChar(right.sticker(2,2)) << sp7 << sp3 << " " << colorToChar(down.sticker(0,0)) << sp5 << colorToChar(down.sticker(1,1)) << sp5 << colorToChar(down.sticker(2,2)) << " " << std::endl;
             std::cout << sp3 << colorToChar(front.sticker(2,1)) << sp7 << colorToChar(right.sticker(2,1)) << sp3 << sp7 << sp3 << sp4 << colorToChar(down.sticker(0,1)) << sp5 << colorToChar(down.sticker(1,2)) << sp4 << std::endl;
             std::cout << sp6 << colorToChar(front.sticker(2,2)) << " " << colorToChar(right.sticker(2,0)) << sp6 << sp7 << sp3 << sp7 << colorToChar(down.sticker(0,2)) << sp7 << std::endl;
             std::cout << "\033[0m" << std::endl;
@@ -368,6 +365,128 @@ RubixCube & RubixCube::rotateCCW(RubixFace face)
     return *this;
 }
 
+// #######################
+// RubixCubeSolver Class
+// #######################
+
+RubixCubeSolver::RubixCubeSolver()
+: mixedCube(1000)
+{}
+
+bool RubixCubeSolver::checkLayer(int row)
+{
+    if (mixedCube.front.sticker(row,0) != BLUE || mixedCube.front.sticker(row,1) != BLUE || mixedCube.front.sticker(row,2) != BLUE)
+        return false;
+    if (mixedCube.left.sticker(row,0) != RED || mixedCube.left.sticker(row,1) != RED || mixedCube.left.sticker(row,2) != RED)
+        return false;
+    if (mixedCube.back.sticker(row,0) != GREEN || mixedCube.back.sticker(row,1) != GREEN || mixedCube.back.sticker(row,2) != GREEN)
+        return false;
+    if (mixedCube.right.sticker(row,0) != ORANGE || mixedCube.right.sticker(row,1) != ORANGE || mixedCube.right.sticker(row,2) != ORANGE)
+        return false;
+    return true;
+}
+
+bool RubixCubeSolver::isCrossSolved()
+{
+    return mixedCube.up.sticker(0,1) == WHITE && mixedCube.up.sticker(1,0) == WHITE && mixedCube.up.sticker(1,2) == WHITE && mixedCube.up.sticker(2,1) == WHITE;
+}
+
+bool RubixCubeSolver::isUpSolved()
+{
+    if (!isCrossSolved())
+        return false;
+    return mixedCube.up.sticker(0,0) == WHITE && mixedCube.up.sticker(0,2) == WHITE && mixedCube.up.sticker(2,0) == WHITE && mixedCube.up.sticker(2,2) == WHITE;
+}
+
+bool RubixCubeSolver::isFirstLayerSolved()
+{
+    if (!isUpSolved())
+        return false;
+    return checkLayer(0);
+}
+
+bool RubixCubeSolver::isSecondLayerSolved()
+{
+    if (!isFirstLayerSolved())
+        return false;
+    return checkLayer(1);
+}
+
+bool RubixCubeSolver::isBottomCrossSolved()
+{
+    return mixedCube.down.sticker(1,0) == YELLOW && mixedCube.down.sticker(0,1) == YELLOW && mixedCube.down.sticker(2,1) == YELLOW && mixedCube.down.sticker(1,2) == YELLOW;
+}
+
+bool RubixCubeSolver::isBottomSolved()
+{
+    if (!isBottomCrossSolved())
+        return false;
+    return mixedCube.down.sticker(0,0) == YELLOW && mixedCube.down.sticker(0,2) == YELLOW && mixedCube.down.sticker(2,0) == YELLOW && mixedCube.down.sticker(2,2) == YELLOW;
+}
+
+bool RubixCubeSolver::isthirdLayerSolved()
+{
+    if (!isBottomSolved())
+        return false;
+    return checkLayer(2);
+}
+
+void RubixCubeSolver::solveCube(RubixCube & _mixedCube)
+{
+    if (solvedCube.equivalent(mixedCube))
+    {
+        std::cout << "Challenge cube is already solved!" << std::endl;
+        return;
+    }
+
+    std::time_t startTime = time(0);
+    uint64_t i = 0;
+    while (!solvedCube.equivalent(mixedCube))
+    {
+        mixedCube.rotateCW(static_cast<RubixFace>(rand() % 6));
+#if _DEBUG
+        if (solvedCube.equivalence(mixedCube) > 35)
+            mixedCube.print();
+        switch(_DEBUG)
+        {
+            case 1:
+                if (isCrossSolved())
+                {
+                    std::cout << "The Top Cross is solved!" << std::endl;
+                    mixedCube.print();
+                }
+            case 2:
+                if (isFirstLayerSolved())
+                {
+                    std::cout << "The First Layer is solved!" << std::endl;
+                    mixedCube.print();
+                }
+            case 3:
+                if (isSecondLayerSolved())
+                {
+                    std::cout << "The Second Layer is solved!" << std::endl;
+                    mixedCube.print();
+                }
+            case 4:
+                if (isthirdLayerSolved())
+                {
+                    std::cout << "The Third Layer is solved!" << std::endl;
+                    mixedCube.print();
+                }
+        }
+#endif
+        i++;
+    }
+
+    int elapsedTime = time(0) - startTime;
+    std::cout << "Solved cube with monkey and a typewriter: " << i << " moves in ";
+    std::cout << (int)(elapsedTime / 60) << " minutes " << elapsedTime % 60 << " seconds." << std::endl;
+}
+
+// #######################
+// Utility functions
+// #######################
+
 void testRotations()
 {
     RubixCube cubeControl;
@@ -417,27 +536,6 @@ void testRotations()
     std::cout << "*************************************************" << std::endl;
 }
 
-// #######################
-// RubixCubeSolver Class
-// #######################
-
-void RubixCubeSolver::solveCube(RubixCube & mixed)
-{
-    RubixCube solved;
-
-    if (solved.equivalent(mixed))
-    {
-        std::cout << "Challenge cube is already solved!" << std::endl;
-        return;
-    }
-
-
-}
-
-// #######################
-// Utility functions
-// #######################
-
 void dummySolver()
 {
     RubixCube solvedCube;
@@ -447,7 +545,7 @@ void dummySolver()
     while (!solvedCube.equivalent(randomCube))
     {
         randomCube.rotateCW(static_cast<RubixFace>(rand() % 6));
-        if (solvedCube.equivalence(randomCube) > 30)
+        if (solvedCube.equivalence(randomCube) > 35)
             randomCube.print();
 #if _DEBUG
         if (i % 40000000 == 0)
@@ -463,8 +561,9 @@ void dummySolver()
 
 int main()
 {
-
+    // This project uses rand to create psuedo random moves for generating valid cubes
     srand(time(0));
+
     testRotations();
 
     RubixCube cube;
@@ -473,5 +572,7 @@ int main()
     RubixCube cube2(25);
     cube2.print();
     
-    dummySolver();
+    RubixCubeSolver solver;
+
+    solver.solveCube(cube2);
 }

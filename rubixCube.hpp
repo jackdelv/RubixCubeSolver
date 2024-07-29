@@ -54,7 +54,6 @@ class RubixCube
     RubixCube & rotateCW(RubixFace face);
     RubixCube & rotateCCW(RubixFace face);
 
-    private:
     Face up;
     Face down;
     Face front;
@@ -68,7 +67,18 @@ class RubixCubeSolver
     public:
     RubixCubeSolver();
 
-    void solveCube(RubixCube & _mixed);
+    bool checkLayer(int row);
+    bool isCrossSolved();
+    bool isUpSolved();
+    bool isFirstLayerSolved();
+    bool isSecondLayerSolved();
+    bool isBottomCrossSolved();
+    bool isBottomSolved();
+    bool isthirdLayerSolved();
+
+    void solveCube(RubixCube & _mixedCube);
 
     private:
+    RubixCube solvedCube;
+    RubixCube mixedCube;
 };
