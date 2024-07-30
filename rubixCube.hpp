@@ -54,6 +54,9 @@ class RubixCube
     RubixCube & rotateCW(RubixFace face);
     RubixCube & rotateCCW(RubixFace face);
 
+    Face & queryFace(RubixFace face);
+
+    private:
     Face up;
     Face down;
     Face front;
@@ -62,34 +65,59 @@ class RubixCube
     Face right;
 };
 
+using Edge = std::pair<RubixFace,RubixFace>;
+using Corner = std::vector<RubixFace>;
+
 class RubixCubeSolver
 {
     public:
     RubixCubeSolver();
+    
+    RubixCube solveCube(RubixCube & _mixedCube);
+
+    //Functions for solving subsections of the cube
+    void solveCross();
+    void solveTopCorners();
+    void solveMiddleLayer();
+    void solveBottomCross();
+    void solveBottomFace();
+    void solveThirdLayer();
 
     // Algoriths for manipulating specific pieces
     void topCornerTopUp(RubixFace face, bool reverse=false);
-    void topCornerTopDown(RubixFace face, bool reverse=false);
+    void topCornerTopDown(RubixFace face);
     void middleEdge(RubixFace face, bool reverse=false);
-    void bottomCross(RubixFace face, bool reverse=false);
-    void bottomCorners(RubixFace face, bool reverse=false);
+    void bottomCross(RubixFace face);
+    void bottomCorners(RubixFace face);
     void bottomSides(RubixFace face, bool reverse=false);
     void bottomSideCenters(RubixFace face, bool reverse=false);
-
+    void rotateWhiteCornerOnBottom(Corner & corner);
+    void rotateMiddleEdgeOnBottom(Edge & edge);
 
     // Solve status checking functions
     bool checkLayer(int row);
     bool isCrossSolved();
+    bool isTopCornersSolved();
     bool isUpSolved();
     bool isFirstLayerSolved();
     bool isSecondLayerSolved();
     bool isBottomCrossSolved();
     bool isBottomSolved();
     bool isthirdLayerSolved();
+    bool isSolved();
 
-    void solveCube(RubixCube & _mixedCube);
+    // Functions for locating pieces on the cube
+    Edge findWhiteEdge();
+    Edge findMiddleEdge();
+    Corner findWhiteCorner();
 
     private:
+    RubixCubeSolver & rotateCW(RubixFace face);
+    RubixCubeSolver & rotateCCW(RubixFace face);
+
+    private:
+    int moves = 0;
+
     RubixCube solvedCube;
     RubixCube mixedCube;
 };
