@@ -118,7 +118,10 @@ RubixCube::RubixCube(int moves)
 {
     for (int n = 0; n <= moves; ++n)
     {
-        this->rotateCW(static_cast<RubixFace>(rand() % 6));
+        if (rand() % 2)
+            rotateCW(static_cast<RubixFace>(rand() % 6));
+        else
+            rotateCCW(static_cast<RubixFace>(rand() % 6));
     }
 }
 
@@ -318,12 +321,12 @@ RubixCube & RubixCube::rotateCCW(RubixFace face)
             up.stickers[0][2] = left.sticker(0,0);
             up.stickers[0][1] = left.sticker(1,0);
             up.stickers[0][0] = left.sticker(2,0);
-            left.stickers[0][0] = down.sticker(0,2);
-            left.stickers[1][0] = down.sticker(0,1);
-            left.stickers[2][0] = down.sticker(0,0);
-            down.stickers[0][2] = right.sticker(0,2);
-            down.stickers[0][1] = right.sticker(1,2);
-            down.stickers[0][0] = right.sticker(2,2);
+            left.stickers[0][0] = down.sticker(2,0);
+            left.stickers[1][0] = down.sticker(2,1);
+            left.stickers[2][0] = down.sticker(2,2);
+            down.stickers[2][2] = right.sticker(0,2);
+            down.stickers[2][1] = right.sticker(1,2);
+            down.stickers[2][0] = right.sticker(2,2);
             right.stickers[0][2] = tempRow[2];
             right.stickers[1][2] = tempRow[1];
             right.stickers[2][2] = tempRow[0];
@@ -337,9 +340,9 @@ RubixCube & RubixCube::rotateCCW(RubixFace face)
             front.stickers[0][0] = down.sticker(0,0);
             front.stickers[1][0] = down.sticker(1,0);
             front.stickers[2][0] = down.sticker(2,0);
-            down.stickers[0][0] = back.sticker(0,2);
+            down.stickers[0][0] = back.sticker(2,2);
             down.stickers[1][0] = back.sticker(1,2);
-            down.stickers[2][0] = back.sticker(2,2);
+            down.stickers[2][0] = back.sticker(0,2);
             back.stickers[0][2] = tempRow[2];
             back.stickers[1][2] = tempRow[1];
             back.stickers[2][2] = tempRow[0];
@@ -347,15 +350,15 @@ RubixCube & RubixCube::rotateCCW(RubixFace face)
         case RIGHT:
             right.rotateCCW();
             tempRow = {up.sticker(2,2), up.sticker(1,2), up.sticker(0,2)};
-            up.stickers[0][2] = back.sticker(0,0);
+            up.stickers[2][2] = back.sticker(0,0);
             up.stickers[1][2] = back.sticker(1,0);
-            up.stickers[2][2] = back.sticker(2,0);
-            back.stickers[0][0] = down.sticker(0,2);
+            up.stickers[0][2] = back.sticker(2,0);
+            back.stickers[0][0] = down.sticker(2,2);
             back.stickers[1][0] = down.sticker(1,2);
-            back.stickers[2][0] = down.sticker(2,2);
-            down.stickers[0][2] = front.sticker(2,2);
+            back.stickers[2][0] = down.sticker(0,2);
+            down.stickers[0][2] = front.sticker(0,2);
             down.stickers[1][2] = front.sticker(1,2);
-            down.stickers[2][2] = front.sticker(0,2);
+            down.stickers[2][2] = front.sticker(2,2);
             front.stickers[0][2] = tempRow[2];
             front.stickers[1][2] = tempRow[1];
             front.stickers[2][2] = tempRow[0];
@@ -372,6 +375,77 @@ RubixCube & RubixCube::rotateCCW(RubixFace face)
 RubixCubeSolver::RubixCubeSolver()
 : mixedCube(1000)
 {}
+
+// In the following functions pieces will either have 2 or three colors associated with it
+// to denote the difference between an edge piece and a corner piece. Some functions make the
+// assumption that the pieces will have a certain orientation that allow it make certain
+// moves that might not move the piece to the correct lovation otherwise.
+
+/**
+ * @brief Rotate a corner piece to its position on the top if the white sticker is not on yellow face (White ==  UP)
+ * 
+ * @param face The face where the white sticker is located.
+ * @param reverse The piece can be on either side of the face. It is reversed for the right side pieces.
+ */
+void RubixCubeSolver::topCornerTopUp(RubixFace face, bool reverse)
+{
+    RubixFace movingFace; // This algorithm executes on two faces
+    switch (face)
+    {
+        case LEFT:
+            movingFace = reverse ? FRONT : BACK;
+            break;
+        case BACK:
+            movingFace = reverse ? LEFT : RIGHT;
+            break;
+        case RIGHT:
+            movingFace = reverse ? BACK : FRONT;
+            break;
+        case FRONT:
+            movingFace = reverse ? RIGHT : LEFT;
+            break;
+        default:
+        {
+            std::cout << "Invalid face for move topCornerTopUP face[" << face << "]" << " reverse[" << reverse << "]." << std::endl;
+            return;
+        }
+
+    }
+    if (reverse)
+        mixedCube.rotateCCW(DOWN).rotateCCW(movingFace).rotateCW(DOWN).rotateCW(movingFace);
+    else
+        mixedCube.rotateCW(DOWN).rotateCW(movingFace).rotateCCW(DOWN).rotateCCW(movingFace);
+}
+
+void topCornerTopDown(RubixFace face, bool reverse)
+{
+
+}
+
+void middleEdge(RubixFace face, bool reverse)
+{
+
+}
+
+void bottomCross(RubixFace face, bool reverse)
+{
+
+}
+
+void bottomCorners(RubixFace face, bool reverse)
+{
+
+}
+
+void bottomSides(RubixFace face, bool reverse)
+{
+
+}
+
+void bottomSideCenters(RubixFace face, bool reverse)
+{
+
+}
 
 bool RubixCubeSolver::checkLayer(int row)
 {
@@ -441,9 +515,26 @@ void RubixCubeSolver::solveCube(RubixCube & _mixedCube)
 
     std::time_t startTime = time(0);
     uint64_t i = 0;
-    while (!solvedCube.equivalent(mixedCube))
+    // while (!solvedCube.equivalent(mixedCube))
     {
-        mixedCube.rotateCW(static_cast<RubixFace>(rand() % 6));
+        mixedCube.print();
+        topCornerTopUp(FRONT);
+        mixedCube.print();
+        topCornerTopUp(BACK);
+        mixedCube.print();
+        topCornerTopUp(LEFT);
+        mixedCube.print();
+        topCornerTopUp(RIGHT);
+        mixedCube.print();
+        topCornerTopUp(FRONT,true);
+        mixedCube.print();
+        topCornerTopUp(BACK,true);
+        mixedCube.print();
+        topCornerTopUp(LEFT,true);
+        mixedCube.print();
+        topCornerTopUp(RIGHT,true);
+        mixedCube.print();
+
 #if _DEBUG
         if (solvedCube.equivalence(mixedCube) > 35)
             mixedCube.print();
@@ -544,7 +635,11 @@ void dummySolver()
     uint64_t i = 0;
     while (!solvedCube.equivalent(randomCube))
     {
-        randomCube.rotateCW(static_cast<RubixFace>(rand() % 6));
+        if (rand() % 2)
+            randomCube.rotateCW(static_cast<RubixFace>(rand() % 6));
+        else
+            randomCube.rotateCCW(static_cast<RubixFace>(rand() % 6));
+
         if (solvedCube.equivalence(randomCube) > 35)
             randomCube.print();
 #if _DEBUG
@@ -566,13 +661,7 @@ int main()
 
     testRotations();
 
-    RubixCube cube;
-    cube.print();
-
-    RubixCube cube2(25);
-    cube2.print();
-    
+    RubixCube cube2(250);
     RubixCubeSolver solver;
-
     solver.solveCube(cube2);
 }

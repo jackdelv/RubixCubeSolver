@@ -67,6 +67,17 @@ class RubixCubeSolver
     public:
     RubixCubeSolver();
 
+    // Algoriths for manipulating specific pieces
+    void topCornerTopUp(RubixFace face, bool reverse=false);
+    void topCornerTopDown(RubixFace face, bool reverse=false);
+    void middleEdge(RubixFace face, bool reverse=false);
+    void bottomCross(RubixFace face, bool reverse=false);
+    void bottomCorners(RubixFace face, bool reverse=false);
+    void bottomSides(RubixFace face, bool reverse=false);
+    void bottomSideCenters(RubixFace face, bool reverse=false);
+
+
+    // Solve status checking functions
     bool checkLayer(int row);
     bool isCrossSolved();
     bool isUpSolved();
