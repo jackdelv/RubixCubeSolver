@@ -110,6 +110,7 @@ class RubixCubeSolver
     Edge findWhiteEdge();
     Edge findMiddleEdge();
     Corner findWhiteCorner();
+    RubixFace findBottomCrossFace();
 
     private:
     RubixCubeSolver & rotateCW(RubixFace face);

@@ -736,6 +736,39 @@ Corner RubixCubeSolver::findWhiteCorner()
     return {UP,UP,UP}; // Not sure what to return here...
 }
 
+/**
+ * @brief Finds the face on which to execute the algorithm for creating the bottom cross
+ * A valid found face for executing on is FRONT, BACK, LEFT, RIGHT
+ * 
+ * @return Face Returns UP if the cross is already solved and FRONT if no pattern is found
+ */
+RubixFace RubixCubeSolver::findBottomCrossFace()
+{
+    // Check for cross
+    if (mixedCube.queryFace(DOWN).sticker(0,1) == YELLOW && mixedCube.queryFace(DOWN).sticker(1,0) == YELLOW && mixedCube.queryFace(DOWN).sticker(1,2) == YELLOW && mixedCube.queryFace(DOWN).sticker(2,1) == YELLOW)
+        return UP;
+
+    if (mixedCube.queryFace(DOWN).sticker(1,0) == YELLOW)
+    {
+        if (mixedCube.queryFace(DOWN).sticker(0,1) == YELLOW || mixedCube.queryFace(DOWN).sticker(1,2) == YELLOW)
+            return BACK;
+        else if (mixedCube.queryFace(DOWN).sticker(2,1) == YELLOW)
+            return RIGHT;
+    }
+
+    if (mixedCube.queryFace(DOWN).sticker(0,1) == YELLOW)
+    {
+        if (mixedCube.queryFace(DOWN).sticker(1,2) == YELLOW || mixedCube.queryFace(DOWN).sticker(2,1) == YELLOW)
+            return LEFT;
+    }
+
+    if (mixedCube.queryFace(DOWN).sticker(1,2) == YELLOW && mixedCube.queryFace(DOWN).sticker(2,1) == YELLOW)
+        return FRONT;
+
+    // No pattern found return front face
+    return FRONT;    
+}
+
 // In the following functions pieces will either have 2 or three colors associated with it
 // to denote the difference between an edge piece and a corner piece. Some functions make the
 // assumption that the pieces will have a certain orientation that allow it make certain
@@ -1318,7 +1351,16 @@ void RubixCubeSolver::solveMiddleLayer()
 
 void RubixCubeSolver::solveBottomCross()
 {
+    while (true)
+    {
+        RubixFace face = findBottomCrossFace();
 
+        // If face is up then cross is already solved
+        if (face == UP)
+            return;
+
+        bottomCross(face);
+    }
 }
 void RubixCubeSolver::solveBottomFace()
 {
@@ -1370,7 +1412,30 @@ void RubixCubeSolver::middleEdge(RubixFace face, bool reverse)
 
 void RubixCubeSolver::bottomCross(RubixFace face)
 {
+    // face CW, DOWN CW, right of face CW, DOWN CCW, right of face CCW, face CCW
+    RubixFace rightFace; // Right of the face passed in
+    switch (face)
+    {
+        case FRONT:
+            rightFace = LEFT;
+            break;
+        case LEFT:
+            rightFace = BACK;
+            break;
+        case BACK:
+            rightFace = RIGHT;
+            break;
+        case RIGHT:
+            rightFace = FRONT;
+            break;
+        default:
+        {
+            std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::bottomCross face[ " << colorToChar(static_cast<RubixColor>(face)) << "]" << std::endl;
+            return;
+        }
+    }
 
+    rotateCW(face).rotateCW(DOWN).rotateCW(rightFace).rotateCCW(DOWN).rotateCCW(rightFace).rotateCCW(face);
 }
 
 void RubixCubeSolver::bottomCorners(RubixFace face)
@@ -1666,7 +1731,7 @@ int main(int argc, char *argv[])
             break;
         }
         default:
-            std::cout << "Default: RubixCubeSolver, 2: Dummy Solver (Try unfinished RubixCubeSolver repeatedly), 3: Test rotations" << std::endl;
+            std::cout << "1: RubixCubeSolver, 2: Dummy Solver (Try unfinished RubixCubeSolver repeatedly), 3: Test rotations" << std::endl;
     }
 
     return 0;
