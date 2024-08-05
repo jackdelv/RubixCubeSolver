@@ -67,13 +67,14 @@ class RubixCube
 
 using Edge = std::pair<RubixFace,RubixFace>;
 using Corner = std::vector<RubixFace>;
+using MoveSet = std::vector<std::tuple<RubixFace, int, const char *> >;
 
 class RubixCubeSolver
 {
     public:
     RubixCubeSolver();
     
-    RubixCube solveCube(RubixCube & _mixedCube);
+    MoveSet solveCube(RubixCube & _mixedCube);
 
     //Functions for solving subsections of the cube
     void solveCross();
@@ -89,13 +90,16 @@ class RubixCubeSolver
     void middleEdge(RubixFace face, bool reverse=false);
     void bottomCross(RubixFace face);
     void bottomCorners(RubixFace face);
-    void bottomSides(RubixFace face, bool reverse=false);
-    void bottomSideCenters(RubixFace face, bool reverse=false);
+    void bottomSideCorners(RubixFace face);
+    void bottomSideCenters(RubixFace face);
     void rotateWhiteCornerOnBottom(Corner & corner);
     void rotateMiddleEdgeOnBottom(Edge & edge);
 
     // Solve status checking functions
     bool checkLayer(int row);
+    int checkLayerOffset();
+    RubixFace checkPartialLayerOffset();
+    bool isBottomCornerMatched();
     bool isCrossSolved();
     bool isTopCornersSolved();
     bool isUpSolved();
@@ -111,6 +115,7 @@ class RubixCubeSolver
     Edge findMiddleEdge();
     Corner findWhiteCorner();
     RubixFace findBottomCrossFace();
+    RubixFace findBottomCornerFace();
 
     private:
     RubixCubeSolver & rotateCW(RubixFace face);
@@ -118,6 +123,7 @@ class RubixCubeSolver
 
     private:
     int moves = 0;
+    MoveSet moveSet;
 
     RubixCube solvedCube;
     RubixCube mixedCube;

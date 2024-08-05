@@ -125,6 +125,14 @@ RubixCube::RubixCube(int moves)
     }
 }
 
+/**
+ * @brief Returns the color changed string with the corresponding letter.
+ * The string returned by this function will change the color of subsequent characters
+ * use "\033[0m" before any follow characters to reset the color.
+ * 
+ * @param c Value from RubixColor struct to convert to character
+ * @return const char* 
+ */
 const char * colorToChar(RubixColor c)
 {
     switch (c)
@@ -740,14 +748,10 @@ Corner RubixCubeSolver::findWhiteCorner()
  * @brief Finds the face on which to execute the algorithm for creating the bottom cross
  * A valid found face for executing on is FRONT, BACK, LEFT, RIGHT
  * 
- * @return Face Returns UP if the cross is already solved and FRONT if no pattern is found
+ * @return Face Returns FRONT if no pattern is found
  */
 RubixFace RubixCubeSolver::findBottomCrossFace()
 {
-    // Check for cross
-    if (mixedCube.queryFace(DOWN).sticker(0,1) == YELLOW && mixedCube.queryFace(DOWN).sticker(1,0) == YELLOW && mixedCube.queryFace(DOWN).sticker(1,2) == YELLOW && mixedCube.queryFace(DOWN).sticker(2,1) == YELLOW)
-        return UP;
-
     if (mixedCube.queryFace(DOWN).sticker(1,0) == YELLOW)
     {
         if (mixedCube.queryFace(DOWN).sticker(0,1) == YELLOW || mixedCube.queryFace(DOWN).sticker(1,2) == YELLOW)
@@ -767,6 +771,81 @@ RubixFace RubixCubeSolver::findBottomCrossFace()
 
     // No pattern found return front face
     return FRONT;    
+}
+
+/**
+ * @brief Finds the face on which to execute the bottom corners algorithm.
+ * A valid found face for executing on is FRONT, BACK, LEFT, RIGHT
+ * 
+ * @return Face Returns UP if the face is already solved
+ */
+RubixFace RubixCubeSolver::findBottomCornerFace()
+{
+    std::vector<int8_t> cornerMatches;
+
+    if (mixedCube.queryFace(DOWN).sticker(0,0) == YELLOW)
+        cornerMatches.push_back(0);
+    if (mixedCube.queryFace(DOWN).sticker(0,2) == YELLOW)
+        cornerMatches.push_back(1);
+    if (mixedCube.queryFace(DOWN).sticker(2,0) == YELLOW)
+        cornerMatches.push_back(2);
+    if (mixedCube.queryFace(DOWN).sticker(2,2) == YELLOW)
+        cornerMatches.push_back(3);
+
+    switch (cornerMatches.size())
+    {
+        case 0:
+            return FRONT;
+        case 1:
+        {
+            switch(cornerMatches[0])
+            {
+                case 0: // 0,0
+                    return RIGHT;
+                case 1: // 0,2
+                    return BACK;
+                case 2: // 2,0
+                    return FRONT;
+                case 3: // 2,2
+                    return LEFT;
+                default:
+                    std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::findBottomCornerFace Case:Single Yellow corner piece" << std::endl;
+                    
+            }
+        }
+        case 2:
+        {
+            if (cornerMatches[0] == 0)
+            {
+                // 0,0 and 0,2
+                if (cornerMatches[1] == 1)
+                    return LEFT;
+                // 0,0 and 2,2
+                if (cornerMatches[1] == 3)
+                    return FRONT;
+                // 0,0 and 2,0
+                if (cornerMatches[1] == 2)
+                    return BACK;
+            }
+            if (cornerMatches[0] == 1)
+            {
+                // 0,2 and 2,2
+                if (cornerMatches[1] == 3)
+                    return FRONT;
+                // 0,2 and 2,0
+                if (cornerMatches[1] == 2)
+                    return RIGHT; 
+            }
+            // 2,0 and 2,2
+            if (cornerMatches[0] == 2 && cornerMatches[1] == 3)
+                return RIGHT;
+        }
+        default:
+            std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::findBottomCornerFace Too many edges found[" << cornerMatches.size() << "]" << std::endl;
+    }
+
+    // This should only happen in an error
+    return DOWN;
 }
 
 // In the following functions pieces will either have 2 or three colors associated with it
@@ -1351,24 +1430,91 @@ void RubixCubeSolver::solveMiddleLayer()
 
 void RubixCubeSolver::solveBottomCross()
 {
-    while (true)
+    while (!isBottomCrossSolved())
     {
         RubixFace face = findBottomCrossFace();
-
-        // If face is up then cross is already solved
-        if (face == UP)
-            return;
 
         bottomCross(face);
     }
 }
+
 void RubixCubeSolver::solveBottomFace()
 {
+    while (!isBottomSolved())
+    {
+        RubixFace face = findBottomCornerFace();
 
+        bottomCorners(face);
+    }
 }
+
 void RubixCubeSolver::solveThirdLayer()
 {
+    while (!isthirdLayerSolved())
+    {
+        bool cornersMatch = isBottomCornerMatched();
+        if (cornersMatch)
+        {
+            int offset = checkLayerOffset();
+            if ( offset > 0)
+            {
+                while (offset)
+                {
+                    // NB this skips a possible shortcut when having to do three CW rotations
+                    rotateCW(DOWN);
+                    offset--;
+                }
+            }
+            else
+            {
+                // Corners match but middle pieces are misplaced
+                RubixFace face = checkPartialLayerOffset();
 
+                switch (face)
+                {
+                    case FRONT:
+                        bottomSideCenters(BACK);
+                        break;
+                    case LEFT:
+                        bottomSideCenters(RIGHT);
+                        break;
+                    case RIGHT:
+                        bottomSideCenters(LEFT);
+                        break;
+                    case BACK:
+                        bottomSideCenters(FRONT);
+                        break;
+                    default:
+                        std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::solveThirdLayer Corners match" << std::endl;
+                }
+            }
+        }
+        else
+        {
+            // Corners don't match
+            RubixFace face = checkPartialLayerOffset();
+
+            switch (face)
+            {
+                case FRONT:
+                    bottomSideCorners(BACK);
+                    break;
+                case LEFT:
+                    bottomSideCorners(RIGHT);
+                    break;
+                case RIGHT:
+                    bottomSideCorners(LEFT);
+                    break;
+                case BACK:
+                    bottomSideCorners(FRONT);
+                    break;
+                default:
+                    std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::solveMiddleLayer Corners don't match" << std::endl;
+            }
+        }
+        if (!isSecondLayerSolved() || !isFirstLayerSolved())
+            std::cout << "This broke something" << std::endl;
+    }
 }
 
 /**
@@ -1440,17 +1586,95 @@ void RubixCubeSolver::bottomCross(RubixFace face)
 
 void RubixCubeSolver::bottomCorners(RubixFace face)
 {
+    RubixFace rightFace; // Right of the current face
 
+    // NOT INTUITIVE DO NOT TOUCH
+    switch (face)
+    {
+        case FRONT:
+            rightFace = RIGHT;
+            break;
+        case LEFT:
+            rightFace = FRONT;
+            break;
+        case BACK:
+            rightFace = LEFT;
+            break;
+        case RIGHT:
+            rightFace = BACK;
+            break;
+        default:
+            std::cout << "\033[31m*ERROR*" << "\033[0m : face translation RubixCubeSolver::findMiddleEdge" << std::endl;
+    }
+
+    rotateCW(rightFace).rotateCW(DOWN).rotateCCW(rightFace).rotateCW(DOWN).rotateCW(rightFace).rotateCW(DOWN).rotateCW(DOWN).rotateCCW(rightFace);
 }
 
-void RubixCubeSolver::bottomSides(RubixFace face, bool reverse)
+void RubixCubeSolver::bottomSideCorners(RubixFace face)
 {
+    std::cout << "bottomSideCorners" << colorToChar(static_cast<RubixColor>(face)) << "\033[0m" << std::endl;
 
+    RubixFace rightFace;
+    RubixFace backFace;
+
+    switch (face)
+    {
+        case FRONT:
+            rightFace = LEFT;
+            backFace = BACK;
+            break;
+        case LEFT:
+            rightFace = BACK;
+            backFace = RIGHT;
+            break;
+        case BACK:
+            rightFace = RIGHT;
+            backFace = FRONT;
+            break;
+        case RIGHT:
+            rightFace = FRONT;
+            backFace = LEFT;
+            break;
+        default:
+        {
+            std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::bottomSideCorners" << std::endl;
+            return;
+        }
+    }
+
+    rotateCCW(rightFace).rotateCW(face).rotateCCW(rightFace).rotateCW(backFace).rotateCW(backFace);
+    rotateCW(rightFace).rotateCCW(face).rotateCCW(rightFace).rotateCW(backFace).rotateCW(backFace).rotateCW(rightFace).rotateCW(rightFace);
 }
 
-void RubixCubeSolver::bottomSideCenters(RubixFace face, bool reverse)
+void RubixCubeSolver::bottomSideCenters(RubixFace face)
 {
+    std::cout << "bottomSideCenters" << colorToChar(static_cast<RubixColor>(face)) << "\033[0m" << std::endl;
 
+    RubixFace rightFace;
+
+    switch (face)
+    {
+        case FRONT:
+            rightFace = LEFT;
+            break;
+        case LEFT:
+            rightFace = BACK;
+            break;
+        case BACK:
+            rightFace = RIGHT;
+            break;
+        case RIGHT:
+            rightFace = FRONT;
+            break;
+        default:
+        {
+            std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::bottomSideCenters" << std::endl;
+            return;
+        }
+    }
+
+    rotateCW(rightFace).rotateCW(rightFace).rotateCW(DOWN).rotateCW(rightFace).rotateCW(DOWN);
+    rotateCCW(rightFace).rotateCCW(DOWN).rotateCCW(rightFace).rotateCCW(DOWN).rotateCCW(rightFace).rotateCW(DOWN).rotateCCW(rightFace);
 }
 
 void RubixCubeSolver::rotateWhiteCornerOnBottom(Corner & corner)
@@ -1512,6 +1736,193 @@ bool RubixCubeSolver::checkLayer(int row)
         return false;
     if (mixedCube.queryFace(RIGHT).sticker(row,0) != ORANGE || mixedCube.queryFace(RIGHT).sticker(row,1) != ORANGE || mixedCube.queryFace(RIGHT).sticker(row,2) != ORANGE)
         return false;
+    return true;
+}
+
+/**
+ * @brief This function checks if the bottom layer is solved but rotated
+ *
+ * @return int If the Layer is not solved -1 is returned else the number of CW rotations to solve each face
+ */
+int RubixCubeSolver::checkLayerOffset()
+{
+    // Check that the final layer all matches
+    if (mixedCube.queryFace(FRONT).sticker(2,0) != mixedCube.queryFace(FRONT).sticker(2,1) && mixedCube.queryFace(FRONT).sticker(2,1) != mixedCube.queryFace(FRONT).sticker(2,2))
+        return -1;
+    if (mixedCube.queryFace(LEFT).sticker(2,0) != mixedCube.queryFace(LEFT).sticker(2,1) && mixedCube.queryFace(LEFT).sticker(2,1) != mixedCube.queryFace(LEFT).sticker(2,2))
+        return -1;
+    if (mixedCube.queryFace(BACK).sticker(2,0) != mixedCube.queryFace(BACK).sticker(2,1) && mixedCube.queryFace(BACK).sticker(2,1) != mixedCube.queryFace(BACK).sticker(2,2))
+        return -1;
+    if (mixedCube.queryFace(RIGHT).sticker(2,0) != mixedCube.queryFace(RIGHT).sticker(2,1) && mixedCube.queryFace(RIGHT).sticker(2,1) != mixedCube.queryFace(RIGHT).sticker(2,2))
+        return -1;
+
+    switch (mixedCube.queryFace(FRONT).sticker(2,0))
+    {
+        case ORANGE:
+            return 1;
+        case GREEN:
+            return 2;
+        case RED:
+            return 3;
+        default:
+        {
+            std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::checkLayerOffset" << std::endl;
+            return -2; // Shouldn't get here... Maybe cube is solved?
+        }
+    }
+}
+
+/**
+ * @brief Checks for a partial match where two corners on a single face match
+ *
+ * @return RubixFace the face where the matched corners are
+ */
+RubixFace RubixCubeSolver::checkPartialLayerOffset()
+{
+    RubixFace match = UP;
+
+    // Search for a face with three pieces matching
+    for (int i = 2; i < 6; i++)
+    {
+        RubixFace face =  static_cast<RubixFace>(i);
+        Face currentFace = mixedCube.queryFace(face);
+
+        if (currentFace.sticker(2,0) == currentFace.sticker(2,1) && currentFace.sticker(2,1) == currentFace.sticker(2,2))
+        {
+            match = face;
+            break;
+        }
+    }
+
+    // Search for a face with two pieces matching
+    if (match == UP)
+    {
+        for (int i = 2; i < 6; i++)
+        {
+            RubixFace face =  static_cast<RubixFace>(i);
+            Face currentFace = mixedCube.queryFace(face);
+
+            if (currentFace.sticker(2,0) == currentFace.sticker(2,2))
+            {
+                match = face;
+                break;
+            }
+        }
+    }
+
+    if (match == UP)
+    {
+        // No match found so pretend its on FRONT
+        return FRONT;
+    }
+
+    // Based on the color of those pieces and the face rotate to match them
+    RubixColor color = mixedCube.queryFace(match).sticker(2,0);
+
+    switch (color)
+    {
+        case ORANGE:
+        {
+            switch (match)
+            {
+                case FRONT:
+                    rotateCW(DOWN);
+                    break;
+                case LEFT:
+                    rotateCW(DOWN).rotateCW(DOWN);
+                    break;
+                case BACK:
+                    rotateCCW(DOWN);
+                    break;
+                case RIGHT:
+                    break;
+                default:
+                    std::cout << "\033[31m*ERROR*" << "\033[0m rubixCubeSolver::checkPartialLayerOffset color of corner[" << colorToChar(color) << "\033[31m}" << std::endl;
+            }
+            break;
+        }
+        case GREEN:
+        {
+            switch (match)
+            {
+                case FRONT:
+                    rotateCW(DOWN).rotateCW(DOWN);
+                    break;
+                case LEFT:
+                    rotateCCW(DOWN);
+                    break;
+                case BACK:
+                    break;
+                case RIGHT:
+                    rotateCW(DOWN);
+                    break;
+                default:
+                    std::cout << "\033[31m*ERROR*" << "\033[0m rubixCubeSolver::checkPartialLayerOffset color of corner[" << colorToChar(color) << "\033[31m}" << std::endl;
+            }
+            break;
+        }
+        case RED:
+        {
+            switch (match)
+            {
+                case FRONT:
+                    rotateCCW(DOWN);
+                    break;
+                case LEFT:
+                    break;
+                case BACK:
+                    rotateCW(DOWN);
+                    break;
+                case RIGHT:
+                    rotateCW(DOWN).rotateCW(DOWN);
+                    break;
+                default:
+                    std::cout << "\033[31m*ERROR*" << "\033[0m rubixCubeSolver::checkPartialLayerOffset color of corner[" << colorToChar(color) << "\033[31m}" << std::endl;
+            }
+            break;
+        }
+        case BLUE:
+        {
+            switch (match)
+            {
+                case FRONT:
+                    break;
+                case LEFT:
+                    rotateCW(DOWN);
+                    break;
+                case BACK:
+                    rotateCW(DOWN).rotateCW(DOWN);
+                    break;
+                case RIGHT:
+                    rotateCCW(DOWN);
+                    break;
+                default:
+                    std::cout << "\033[31m*ERROR*" << "\033[0m rubixCubeSolver::checkPartialLayerOffset color of corner[" << colorToChar(color) << "\033[31m}" << std::endl;
+            }
+            break;
+        }
+        default:
+        {
+            std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::checkLayerOffset" << std::endl;
+            return UP; // Shouldn't get here... Maybe cube is solved?
+        }
+    }
+
+    return static_cast<RubixFace>(color);
+}
+
+bool RubixCubeSolver::isBottomCornerMatched()
+{
+    // Check that the final layer all matches
+    if (mixedCube.queryFace(FRONT).sticker(2,0) != mixedCube.queryFace(FRONT).sticker(2,2))
+        return false;
+    if (mixedCube.queryFace(LEFT).sticker(2,0) != mixedCube.queryFace(LEFT).sticker(2,2))
+        return false;
+    if (mixedCube.queryFace(BACK).sticker(2,0) != mixedCube.queryFace(BACK).sticker(2,2))
+        return false;
+    if (mixedCube.queryFace(RIGHT).sticker(2,0) != mixedCube.queryFace(RIGHT).sticker(2,2))
+        return false;
+
     return true;
 }
 
@@ -1578,14 +1989,14 @@ bool RubixCubeSolver::isSolved()
     return true;
 }
 
-RubixCube RubixCubeSolver::solveCube(RubixCube & _mixedCube)
+MoveSet RubixCubeSolver::solveCube(RubixCube & _mixedCube)
 {
     mixedCube = _mixedCube;
 
     if (solvedCube.equivalent(mixedCube))
     {
         std::cout << "Challenge cube is already solved!" << std::endl;
-        return mixedCube;
+        return moveSet;
     }
 
 #if !_DEBUG
@@ -1604,7 +2015,7 @@ RubixCube RubixCubeSolver::solveCube(RubixCube & _mixedCube)
     
     std::cout << "Solved cube with " << moves << " moves in " << elapsedTime % 60 << " seconds." << std::endl << std::endl;
 
-    return mixedCube;
+    return moveSet;
 }
 
 RubixCubeSolver & RubixCubeSolver::rotateCW(RubixFace face)
@@ -1614,6 +2025,7 @@ RubixCubeSolver & RubixCubeSolver::rotateCW(RubixFace face)
     std::cout << "Rotating " << colorToChar(static_cast<RubixColor>(face)) << "\033[0m Clockwise..." << std::endl << std::endl;
 #endif
 
+    moveSet.emplace_back(face, 0, "CW");
     mixedCube.rotateCW(face);
     moves++;
     return *this;
@@ -1626,6 +2038,7 @@ RubixCubeSolver & RubixCubeSolver::rotateCCW(RubixFace face)
     std::cout << "Rotating " << colorToChar(static_cast<RubixColor>(face)) << "\033[0m Counter Clockwise..." << std::endl << std::endl;
 #endif
 
+    moveSet.emplace_back(face, 1, "CCW");
     mixedCube.rotateCCW(face);
     moves++;
     return *this;
@@ -1686,21 +2099,29 @@ void testRotations()
 
 void dummySolver()
 {
-    RubixCube solvedCube;
-    RubixCube randomCube(100);
+    RubixCube minCube;
+    RubixCube randomCube;
+    int32_t minMoves = 256;
+    MoveSet minMoveSet;
     std::time_t startTime = time(0);
     uint64_t i = 0;
-    while (!solvedCube.equivalent(randomCube))
+    while (i < 5000)
     {
         randomCube = RubixCube(50);
         RubixCubeSolver solver;
-        randomCube = solver.solveCube(randomCube); 
+        MoveSet moveSet = solver.solveCube(randomCube);
+
+        if (moveSet.size() < minMoves)
+        {
+            minMoves = moveSet.size();
+            minMoveSet = moveSet;
+        }
         i++;
     }
 
     int elapsedTime = time(0) - startTime;
-    std::cout << "Solved cube with monkey and a typewriter: " << i << " moves in ";
-    std::cout << (int)(elapsedTime / 60) << " minutes " << elapsedTime % 60 << " seconds." << std::endl;
+    std::cout << "Solved cube " << i << " times and found a min move set size of " << minMoves << std::endl;
+    std::cout << "Finished in " << (int)(elapsedTime / 60) << " minutes " << elapsedTime % 60 << " seconds." << std::endl;
 }
 
 int main(int argc, char *argv[])
@@ -1728,6 +2149,11 @@ int main(int argc, char *argv[])
         case 3:
         {
             testRotations();
+            break;
+        }
+        case 4:
+        {
+
             break;
         }
         default:
