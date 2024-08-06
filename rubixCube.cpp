@@ -812,6 +812,7 @@ RubixFace RubixCubeSolver::findBottomCornerFace()
                     std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::findBottomCornerFace Case:Single Yellow corner piece" << std::endl;
                     
             }
+            break;
         }
         case 2:
         {
@@ -839,6 +840,7 @@ RubixFace RubixCubeSolver::findBottomCornerFace()
             // 2,0 and 2,2
             if (cornerMatches[0] == 2 && cornerMatches[1] == 3)
                 return RIGHT;
+            break;
         }
         default:
             std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::findBottomCornerFace Too many edges found[" << cornerMatches.size() << "]" << std::endl;
@@ -1450,13 +1452,13 @@ void RubixCubeSolver::solveBottomFace()
 
 void RubixCubeSolver::solveThirdLayer()
 {
-    while (!isthirdLayerSolved())
+    while (!isSolved())
     {
         bool cornersMatch = isBottomCornerMatched();
         if (cornersMatch)
         {
             int offset = checkLayerOffset();
-            if ( offset > 0)
+            if (offset > 0)
             {
                 while (offset)
                 {
@@ -1512,8 +1514,6 @@ void RubixCubeSolver::solveThirdLayer()
                     std::cout << "\033[31m*ERROR*" << "\033[0m RubixCubeSolver::solveMiddleLayer Corners don't match" << std::endl;
             }
         }
-        if (!isSecondLayerSolved() || !isFirstLayerSolved())
-            std::cout << "This broke something" << std::endl;
     }
 }
 
@@ -1612,8 +1612,6 @@ void RubixCubeSolver::bottomCorners(RubixFace face)
 
 void RubixCubeSolver::bottomSideCorners(RubixFace face)
 {
-    std::cout << "bottomSideCorners" << colorToChar(static_cast<RubixColor>(face)) << "\033[0m" << std::endl;
-
     RubixFace rightFace;
     RubixFace backFace;
 
@@ -1648,8 +1646,6 @@ void RubixCubeSolver::bottomSideCorners(RubixFace face)
 
 void RubixCubeSolver::bottomSideCenters(RubixFace face)
 {
-    std::cout << "bottomSideCenters" << colorToChar(static_cast<RubixColor>(face)) << "\033[0m" << std::endl;
-
     RubixFace rightFace;
 
     switch (face)
@@ -1928,7 +1924,9 @@ bool RubixCubeSolver::isBottomCornerMatched()
 
 bool RubixCubeSolver::isCrossSolved()
 {
-    return mixedCube.queryFace(UP).sticker(0,1) == WHITE && mixedCube.queryFace(UP).sticker(1,0) == WHITE && mixedCube.queryFace(UP).sticker(1,2) == WHITE && mixedCube.queryFace(UP).sticker(2,1) == WHITE;
+    if (mixedCube.queryFace(UP).sticker(0,1) != WHITE || mixedCube.queryFace(UP).sticker(1,0) != WHITE || mixedCube.queryFace(UP).sticker(1,2) != WHITE || mixedCube.queryFace(UP).sticker(2,1) != WHITE)
+        return false;
+    return mixedCube.queryFace(FRONT).sticker(0,1) == BLUE && mixedCube.queryFace(LEFT).sticker(0,1) == RED && mixedCube.queryFace(RIGHT).sticker(0,1) == ORANGE && mixedCube.queryFace(BACK).sticker(0,1) == GREEN;
 }
 
 bool RubixCubeSolver::isTopCornersSolved()
@@ -2025,7 +2023,7 @@ RubixCubeSolver & RubixCubeSolver::rotateCW(RubixFace face)
     std::cout << "Rotating " << colorToChar(static_cast<RubixColor>(face)) << "\033[0m Clockwise..." << std::endl << std::endl;
 #endif
 
-    moveSet.emplace_back(face, 0, "CW");
+    moveSet.emplace_back(face, moves, "CW");
     mixedCube.rotateCW(face);
     moves++;
     return *this;
@@ -2038,7 +2036,7 @@ RubixCubeSolver & RubixCubeSolver::rotateCCW(RubixFace face)
     std::cout << "Rotating " << colorToChar(static_cast<RubixColor>(face)) << "\033[0m Counter Clockwise..." << std::endl << std::endl;
 #endif
 
-    moveSet.emplace_back(face, 1, "CCW");
+    moveSet.emplace_back(face, moves, "CCW");
     mixedCube.rotateCCW(face);
     moves++;
     return *this;
@@ -2097,15 +2095,24 @@ void testRotations()
     std::cout << "*************************************************" << std::endl;
 }
 
-void dummySolver()
+void gatherStats(int moves = 100000)
 {
-    RubixCube minCube;
+    // Solved 1000000 Random Rubix Cubes with a min move set size of 62 and Max move set of 292
+    // The average Move set size was 177 moves.
+    // Finished in 24 minutes 3 seconds.
+
     RubixCube randomCube;
     int32_t minMoves = 256;
+    int32_t maxMoves = 0;
+    int64_t totalMoves = 0;
     MoveSet minMoveSet;
+    MoveSet maxMoveSet;
+    RubixCube minCube;
+    RubixCube maxCube;
     std::time_t startTime = time(0);
     uint64_t i = 0;
-    while (i < 5000)
+
+    while (i < moves)
     {
         randomCube = RubixCube(50);
         RubixCubeSolver solver;
@@ -2116,11 +2123,20 @@ void dummySolver()
             minMoves = moveSet.size();
             minMoveSet = moveSet;
         }
+
+        if (moveSet.size() > maxMoves)
+        {
+            maxMoves = moveSet.size();
+            maxMoveSet = moveSet;
+        }
+
+        totalMoves += moveSet.size();
         i++;
     }
 
     int elapsedTime = time(0) - startTime;
-    std::cout << "Solved cube " << i << " times and found a min move set size of " << minMoves << std::endl;
+    std::cout << std::endl << "Solved " << i << " Random Rubix Cubes with a min move set size of " << minMoves << " and Max move set of " << maxMoves <<  std::endl;
+    std::cout << "The average Move set size was " << totalMoves / i << " moves." << std::endl;
     std::cout << "Finished in " << (int)(elapsedTime / 60) << " minutes " << elapsedTime % 60 << " seconds." << std::endl;
 }
 
@@ -2143,7 +2159,10 @@ int main(int argc, char *argv[])
         }
         case 2:
         {
-            dummySolver();
+            if (argc == 3)
+                gatherStats(std::stoi(argv[2]));
+            else
+                gatherStats();
             break;
         }
         case 3:
