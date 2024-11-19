@@ -401,6 +401,11 @@ Face & RubixCube::queryFace(RubixFace face)
         case DOWN:
             return down;
             break;
+        default:
+        {
+            std::cout << "Error RubixCubeSolver::queryFace" << std::endl;
+            return down; // MORE: Should probably throw an exception in these types of cases
+        }
     }
 }
 
