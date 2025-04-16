@@ -2178,7 +2178,7 @@ int parseCommandLineArguments(int argc, char*argv[])
             numCubes = std::stoi(argv[2]);
         gatherStats(numCubes);
     }
-    else if (strcmp(argv[1], "showMoves"))
+    else if (strcmp(argv[1], "showMoves")==0)
     {
         RubixCube cube(100);
         RubixCubeSolver solver;
@@ -2216,7 +2216,7 @@ int parseCommandLineArguments(int argc, char*argv[])
             }
         }
     }
-    else if (strcmp(argv[1], "test"))
+    else if (strcmp(argv[1], "test")==0)
     {
         testRotations();
     }
