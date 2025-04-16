@@ -1,6 +1,7 @@
 #include "rubixCube.hpp"
 #include <iostream>
 #include <cstdlib>
+#include <chrono>
 
 // #######################
 // Face Class
@@ -124,6 +125,10 @@ RubixCube::RubixCube(int moves)
             rotateCCW(static_cast<RubixFace>(rand() % 6));
     }
 }
+
+RubixCube::RubixCube(const RubixCube &otherCube)
+: up(otherCube.up), left(otherCube.left), right(otherCube.right), front(otherCube.front), back(otherCube.back), down(otherCube.down)
+{}
 
 /**
  * @brief Returns the color changed string with the corresponding letter.
@@ -1997,21 +2002,17 @@ MoveSet RubixCubeSolver::solveCube(RubixCube & _mixedCube)
         return moveSet;
     }
 
-#if !_DEBUG
-    mixedCube.print();
-#endif
-
-    std::time_t startTime = time(0);
+    using namespace std::chrono;
+    int64_t startTime = duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
     solveCross();
     solveTopCorners();
     solveMiddleLayer();
     solveBottomCross();
     solveBottomFace();
     solveThirdLayer();
-    int elapsedTime = time(0) - startTime;
-    mixedCube.print();
-    
-    std::cout << "Solved cube with " << moves << " moves in " << elapsedTime % 60 << " seconds." << std::endl << std::endl;
+    int64_t elapsedTime = duration_cast<microseconds>(system_clock::now().time_since_epoch()).count() - startTime;
+
+    std::cout << "Solved cube with " << moves << " moves in " << elapsedTime << " microseconds." << std::endl << std::endl;
 
     return moveSet;
 }
@@ -2030,7 +2031,7 @@ RubixCubeSolver & RubixCubeSolver::rotateCW(RubixFace face)
 }
 
 RubixCubeSolver & RubixCubeSolver::rotateCCW(RubixFace face)
-{   
+{
 #if _DEBUG
     mixedCube.print();
     std::cout << "Rotating " << colorToChar(static_cast<RubixColor>(face)) << "\033[0m Counter Clockwise..." << std::endl << std::endl;
@@ -2136,14 +2137,103 @@ void gatherStats(int moves = 100000)
 
     int elapsedTime = time(0) - startTime;
     std::cout << std::endl << "Solved " << i << " Random Rubix Cubes with a min move set size of " << minMoves << " and Max move set of " << maxMoves <<  std::endl;
-    std::cout << "The average Move set size was " << totalMoves / i << " moves." << std::endl;
+    std::cout << "The average Move set size was " << totalMoves / i << " moves with an average time of " << (double) elapsedTime / (double) moves << " seconds." << std::endl;
     std::cout << "Finished in " << (int)(elapsedTime / 60) << " minutes " << elapsedTime % 60 << " seconds." << std::endl;
+}
+
+int parseCommandLineArguments(int argc, char*argv[])
+{
+	if (argc==1)
+    {
+        std::cout << std::endl;
+        std::cout << "==========================================================================================" << std::endl;
+		std::cout << "Rubix Cube Solver. Can generate a random rubix cube, print one out, and solve them." << std::endl;
+		std::cout << "The following arguments can be passed to use this utility:" << std::endl << std::endl;
+        std::cout << "test               | Test the RubixCube class" << std::endl;
+		std::cout << "print(int n=0)     | Print Rubix Cube. n is the number of randoms moves to make before printing." << std::endl;
+		std::cout << "solve(int n=1)     | solve Rubix Cubes. n is the number of cubes to solve." << std::endl;
+        std::cout << "showMoves(int n=0) | Solve a Rubix cube, but show each individual move. n is the number of moves to show from the end i.e. n=10 will show the last 10 moves. No argument shows all moves." << std::endl;
+        std::cout << std::endl;
+        return 0;
+    }
+
+    if (argc > 3)
+    {
+        std::cout << "Error: Too many arguments" << std::endl;
+        return -1;
+    }
+
+    if (strcmp(argv[1], "print")==0)
+    {
+        unsigned i = 0;
+        if (argc > 2)
+            i = std::stoi(argv[2]);
+        RubixCube cube(i);
+        cube.print();
+    }
+    else if (strcmp(argv[1], "solve")==0)
+    {
+        unsigned numCubes = 1;
+        if (argc > 2)
+            numCubes = std::stoi(argv[2]);
+        gatherStats(numCubes);
+    }
+    else if (strcmp(argv[1], "showMoves"))
+    {
+        RubixCube cube(100);
+        RubixCubeSolver solver;
+        MoveSet moves = solver.solveCube(cube);
+        unsigned numMoves = moves.size();
+        int i = 0;
+        int offset = 0;
+
+        if (argc > 2)
+        {
+            offset = numMoves - std::stoi(argv[2]);
+            assert(offset>=0);
+        }
+
+        std::cout << "== Starting Cube ==" << std::endl;
+        cube.print();
+        for (; i < numMoves; i++)
+        {
+            const char * direction = std::get<2>(moves[i]);
+
+            if (strcmp(direction, "CW") == 0)
+                cube.rotateCW(std::get<0>(moves[i]));
+            else if (strcmp(direction, "CCW") == 0)
+                cube.rotateCCW(std::get<0>(moves[i]));
+            else
+            {
+                std::cout << "Error: unknown direction from solved move set ( " << direction << " )" << std::endl;
+                return -3;
+            }
+
+            if (i >= offset)
+            {
+                std::cout << "== Rotating " << colorToChar(static_cast<RubixColor>(std::get<0>(moves[i]))) << " "<< direction << " ==" << std::endl << std::endl;
+                cube.print();
+            }
+        }
+    }
+    else if (strcmp(argv[1], "test"))
+    {
+        testRotations();
+    }
+    else
+    {
+        std::cout << "Error: Unrecognized command " << argv[1] << std::endl;
+        return -2;
+    }
+    return 0;
 }
 
 int main(int argc, char *argv[])
 {
     // This project uses rand to create psuedo random moves for generating valid cubes
     srand(time(0));
+    return parseCommandLineArguments(argc, argv);
+
     int mode = 0;
     if (argc > 1)
         mode = std::stoi(argv[1]);
@@ -2154,7 +2244,7 @@ int main(int argc, char *argv[])
         {
             RubixCube cube2(250);
             RubixCubeSolver solver;
-            solver.solveCube(cube2); 
+            solver.solveCube(cube2);
             break;
         }
         case 2:

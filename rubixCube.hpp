@@ -45,6 +45,7 @@ class RubixCube
     public:
     RubixCube();
     RubixCube(int moves);
+    RubixCube(const RubixCube &otherCube);
 
     void print(int spacing = 0);
     bool equivalent(RubixCube &other);
