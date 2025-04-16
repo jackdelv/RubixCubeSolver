@@ -2096,7 +2096,7 @@ void testRotations()
     std::cout << "*************************************************" << std::endl;
 }
 
-void gatherStats(int moves = 100000)
+void gatherStats(int moves = 100000, bool showCubes=false)
 {
     // Solved 1000000 Random Rubix Cubes with a min move set size of 62 and Max move set of 292
     // The average Move set size was 177 moves.
@@ -2117,7 +2117,21 @@ void gatherStats(int moves = 100000)
     {
         randomCube = RubixCube(50);
         RubixCubeSolver solver;
+        if (showCubes)
+            randomCube.print();
         MoveSet moveSet = solver.solveCube(randomCube);
+        if (showCubes)
+        {
+            /**
+             * solveCube does not return a solved cube. It asserts that the moves it recorded
+             * produced a solved cube from the one that was passed in.
+             * To show the results we need to either create a new cube or solve the randomCube
+             * using the output moveSet. Feels clunky but too much of a hassle to fix ATM.
+             */
+
+            RubixCube solvedCube;
+            solvedCube.print();
+        }
 
         if (moveSet.size() < minMoves)
         {
@@ -2157,7 +2171,7 @@ int parseCommandLineArguments(int argc, char*argv[])
         return 0;
     }
 
-    if (argc > 3)
+    if (argc > 5)
     {
         std::cout << "Error: Too many arguments" << std::endl;
         return -1;
@@ -2174,9 +2188,43 @@ int parseCommandLineArguments(int argc, char*argv[])
     else if (strcmp(argv[1], "solve")==0)
     {
         unsigned numCubes = 1;
+        bool showCubes = false;
         if (argc > 2)
-            numCubes = std::stoi(argv[2]);
-        gatherStats(numCubes);
+        {
+            int i = 2;
+            while (true)
+            {
+                if (i >= argc)
+                    break;
+
+                const char *option = argv[i++];
+                switch (option[0])
+                {
+                    case 'n':
+                    {
+                        if (i >= argc)
+                        {
+                            std::cout << "Missing argument for number of cubes to solve" << std::endl;
+                            return -4;
+                        }
+
+                        numCubes = std::stoi(argv[i++]);
+                        break;
+                    }
+                    case 's':
+                    {
+                        showCubes = true;
+                        break;
+                    }
+                    default:
+                    {
+                        std::cout << "Unknown solve options: " << option << std::endl;
+                        return -5;
+                    }
+                }
+            }
+        }
+        gatherStats(numCubes, showCubes);
     }
     else if (strcmp(argv[1], "showMoves")==0)
     {
