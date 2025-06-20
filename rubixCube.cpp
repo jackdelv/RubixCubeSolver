@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <chrono>
+#include <cassert>
+#include <cstring>
 
 // #######################
 // Face Class
@@ -404,6 +406,11 @@ Face & RubixCube::queryFace(RubixFace face)
         case DOWN:
             return down;
             break;
+        default:
+        {
+            std::cout << "Error RubixCube::queryFace" << std::endl;
+            exit(1);
+        }
     }
 }
 
