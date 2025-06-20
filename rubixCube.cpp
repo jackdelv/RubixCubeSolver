@@ -2170,10 +2170,10 @@ int parseCommandLineArguments(int argc, char*argv[])
         std::cout << "==========================================================================================" << std::endl;
 		std::cout << "Rubix Cube Solver. Can generate a random rubix cube, print one out, and solve them." << std::endl;
 		std::cout << "The following arguments can be passed to use this utility:" << std::endl << std::endl;
-        std::cout << "test               | Test the RubixCube class" << std::endl;
-		std::cout << "print(int n=0)     | Print Rubix Cube. n is the number of randoms moves to make before printing." << std::endl;
-		std::cout << "solve(int n=1)     | solve Rubix Cubes. n is the number of cubes to solve." << std::endl;
-        std::cout << "showMoves(int n=0) | Solve a Rubix cube, but show each individual move. n is the number of moves to show from the end i.e. n=10 will show the last 10 moves. No argument shows all moves." << std::endl;
+        std::cout << "test                   | Test the RubixCube class" << std::endl;
+		std::cout << "print(int n=0)         | Print Rubix Cube. n is the number of randoms moves to make before printing." << std::endl;
+		std::cout << "solve(int n=1, bool s) | Solve Rubix Cubes. n is the number of cubes to solve. Pass in s to show the before/after for each cube. (e.g. solve n 1000 s)" << std::endl;
+        std::cout << "showMoves(int n=0)     | Solve a Rubix cube, but show each individual move. n is the number of moves to show from the end i.e. n=10 will show the last 10 moves. No argument shows all moves." << std::endl;
         std::cout << std::endl;
         return 0;
     }
