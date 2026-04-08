@@ -11,6 +11,35 @@ enum RubixColor
     GREEN
 };
 
+/**
+ * @brief Returns the color changed string with the corresponding letter.
+ * The string returned by this function will change the color of subsequent characters
+ * use "\033[0m" before any follow characters to reset the color.
+ *
+ * @param c Value from RubixColor struct to convert to character
+ * @return const char*
+ */
+inline const char * colorToChar(RubixColor c)
+{
+    switch (c)
+    {
+        case WHITE:
+            return "\033[37mW";
+        case YELLOW:
+            return "\033[93mY";
+        case BLUE:
+            return "\033[34mB";
+        case GREEN:
+            return "\033[32mG";
+        case RED:
+            return "\033[31mR";
+        case ORANGE:
+            return "\033[35mO";
+        default:
+            return "\033[0mX";
+    }
+}
+
 enum RubixFace
 {
     UP,
