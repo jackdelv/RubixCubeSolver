@@ -65,7 +65,7 @@ Face & Face::rotateCCW()
     return *this;
 }
 
-bool Face::operator==(const Face & other)
+bool Face::operator==(const Face & other) const
 {
     for (int i = 0; i < 3; i++)
     {

@@ -60,7 +60,7 @@ class Face
     Face & rotateCW();
     Face & rotateCCW();
 
-    bool operator==(const Face &other);
+    bool operator==(const Face &other) const;
     unsigned equivalence(const Face &other);
     void reset();
 
